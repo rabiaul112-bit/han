@@ -1,4 +1,4 @@
-[app][app]
+[app]
 title = WPS PIN Generator
 package.name = wpsgenerator
 package.domain = com.example
