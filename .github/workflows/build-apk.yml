@@ -1,0 +1,91 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            python3-pip \
+            python3-dev \
+            libffi-dev \
+            libssl-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libreadline-dev \
+            libsqlite3-dev \
+            libbz2-dev \
+            zlib1g-dev \
+            openjdk-17-jdk \
+            autoconf \
+            libtool \
+            pkg-config \
+            zip \
+            unzip \
+            wget \
+            automake \
+            libltdl-dev \
+            cmake \
+            libxml2-dev \
+            libxslt1-dev
+
+      - name: Install Buildozer
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install buildozer virtualenv cython
+
+      - name: Build APK
+        env:
+          ANDROID_SDK_ROOT: /home/runner/.buildozer/android/platform/android-sdk
+        run: |
+          mkdir -p $ANDROID_SDK_ROOT/tools/bin
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -qq commandlinetools-linux-9477386_latest.zip
+          mv cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          
+          ln -sf $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $ANDROID_SDK_ROOT/tools/bin/sdkmanager
+          
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.1" "platforms;android-33" "platform-tools"
+          
+          # تغيير مستوى السجل إلى 2 لعرض تفاصيل أكثر
+          sed -i 's/log_level = 2/log_level = 2/' buildozer.spec
+          
+          # بناء التطبيق مع عرض كامل للأخطاء
+          buildozer android debug 2>&1 | tee build.log
+          
+          # عرض آخر 50 سطر من السجل للمساعدة في التشخيص
+          echo "=== آخر 50 سطر من السجل ==="
+          tail -50 build.log
+
+      - name: Check for APK
+        run: |
+          echo "البحث عن ملفات APK..."
+          find . -name "*.apk" -type f 2>/dev/null || echo "لم يتم العثور على أي ملف APK"
+          ls -la bin/ 2>/dev/null || echo "مجلد bin غير موجود"
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wps-generator-apk
+          path: bin/*.apk
