@@ -1,0 +1,21 @@
+name: Build APK
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # لتتمكن من تشغيله يدوياً
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build APK with Buildozer
+      uses: ArtemSBulgakov/buildozer-action@v1
+      with:
+        buildozer_spec: buildozer.spec
+        workdir: .
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wps-generator-apk
+        path: bin/*.apk
