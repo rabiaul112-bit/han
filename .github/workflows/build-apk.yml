@@ -43,23 +43,34 @@ jobs:
             libltdl-dev \
             cmake
 
-      - name: Setup Android SDK
-        run: |
-          export ANDROID_SDK_ROOT="/home/runner/.buildozer/android/platform/android-sdk"
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q commandlinetools-linux-9477386_latest.zip
-          mv cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "platforms;android-34" "platform-tools"
-
       - name: Install Buildozer
         run: |
           pip install --upgrade pip setuptools wheel
           pip install buildozer virtualenv cython
 
       - name: Build APK
+        env:
+          ANDROID_SDK_ROOT: /home/runner/.buildozer/android/platform/android-sdk
         run: |
+          # إنشاء مجلدات SDK
+          mkdir -p $ANDROID_SDK_ROOT/tools/bin
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          
+          # تحميل أدوات سطر الأوامر
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -qq commandlinetools-linux-9477386_latest.zip
+          mv cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          
+          # إنشاء رابط رمزي إلى المكان الذي يبحث فيه Buildozer
+          ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $ANDROID_SDK_ROOT/tools/bin/sdkmanager
+          
+          # قبول التراخيص
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          
+          # تثبيت أدوات البناء
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "platforms;android-34" "platform-tools"
+          
+          # بناء التطبيق
           buildozer android debug
 
       - name: Upload APK
