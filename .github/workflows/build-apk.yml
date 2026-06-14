@@ -67,25 +67,24 @@ jobs:
           
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.1" "platforms;android-33" "platform-tools"
           
-          # تغيير مستوى السجل إلى 2 لعرض تفاصيل أكثر
-          sed -i 's/log_level = 2/log_level = 2/' buildozer.spec
-          
-          # بناء التطبيق مع عرض كامل للأخطاء
-          buildozer android debug 2>&1 | tee build.log
-          
-          # عرض آخر 50 سطر من السجل للمساعدة في التشخيص
-          echo "=== آخر 50 سطر من السجل ==="
-          tail -50 build.log
+          buildozer android debug
 
-      - name: Check for APK
+      - name: Find APK files
         run: |
-          echo "البحث عن ملفات APK..."
-          find . -name "*.apk" -type f 2>/dev/null || echo "لم يتم العثور على أي ملف APK"
+          echo "=== البحث عن جميع ملفات APK ==="
+          find /home/runner -name "*.apk" -type f 2>/dev/null
+          echo ""
+          echo "=== محتويات مجلد bin ==="
           ls -la bin/ 2>/dev/null || echo "مجلد bin غير موجود"
+          echo ""
+          echo "=== محتويات مجلد .buildozer ==="
+          ls -la .buildozer/ 2>/dev/null || echo "مجلد .buildozer غير موجود"
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: wps-generator-apk
-          path: bin/*.apk
+          path: |
+            bin/*.apk
+            .buildozer/**/*.apk
+            *.apk
