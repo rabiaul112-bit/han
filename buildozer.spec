@@ -15,10 +15,6 @@ android.ndk = 25b
 android.gradle_dependencies = 
 android.entrypoint = org.kivy.android.PythonActivity
 android.private_storage = True
-ios.kivy_ios_url = https://github.com/kivy/kivy-ios
-ios.kivy_ios_branch = master
-ios.ios_deploy_version = 13
-ios.codesign.allowed = false
 
 [buildozer]
 log_level = 2
